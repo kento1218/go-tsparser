@@ -11,8 +11,8 @@ import (
 	"bytes"
 	"sort"
 
-	"code.google.com/p/go.text/encoding/japanese"
-	"code.google.com/p/go.text/transform"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 )
 
 type code uint16
@@ -534,4 +534,14 @@ func (c *strConverter) doControl(b byte) {
 	case 0x1b:
 		c.controller.escSeqCount = 1
 	}
+}
+
+func (c *strConverter) String() string {
+	return c.jisArray.String()
+}
+
+func ConvertString(data []byte) string {
+	conv := NewStrConverter()
+	conv.Convert(data)
+	return conv.String()
 }
