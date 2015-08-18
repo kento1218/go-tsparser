@@ -145,17 +145,7 @@ type tableScannerBuffer struct {
 }
 
 func (b *tableScannerBuffer) extend(right []byte) {
-	n := len(b.data)
-	m := n + len(right)
-
-	if m > cap(b.data) {
-		newSlice := make([]byte, m*2)
-		copy(newSlice, b.data)
-		b.data = newSlice
-	}
-
-	b.data = b.data[0:m]
-	copy(b.data[n:m], right)
+	b.data = append(b.data, right...)
 }
 
 func (b *tableScannerBuffer) clear() {
@@ -277,12 +267,19 @@ func (s *TableScanner) Scan() bool {
 
 		var err error
 		if packet.payloadUnitStartIndicator() {
+			// [Start of new payload]
+			// Store current packet to buffer and commit previous payload data
+			// if exists
+
 			err = buffer.Begin(packet.continuityCounter(), packet.Payload())
 			if err == nil && buffer.isFull() {
 				s.pid = packet.PID()
 				return true
 			}
 		} else if ok {
+			// [Payload data for known PID]
+			// Store current packet to existing buffer
+
 			err = buffer.Extend(packet.continuityCounter(), packet.Payload())
 		}
 
