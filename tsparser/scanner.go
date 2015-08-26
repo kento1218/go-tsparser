@@ -15,6 +15,7 @@ var (
 	ErrInvalidPointer  = errors.New("Invalid value of pointer_field")
 	ErrPacketScrambled = errors.New("Scrambled")
 	ErrPacketDropped   = errors.New("Detected dropping packet")
+	ErrInvalidPayload  = errors.New("Data for not started payload")
 )
 
 const (
@@ -200,6 +201,7 @@ func (b *tableScannerBuffer) Begin(cc uint8, payload []byte) (err error) {
 
 func (b *tableScannerBuffer) Extend(cc uint8, payload []byte) (err error) {
 	if len(b.data) == 0 {
+		err = ErrInvalidPayload
 		return
 	}
 
@@ -276,9 +278,10 @@ func (s *TableScanner) Scan() bool {
 				s.pid = packet.PID()
 				return true
 			}
-		} else if ok {
-			// [Payload data for known PID]
+		} else {
+			// [Continued payload data]
 			// Store current packet to existing buffer
+			// If PID is unknown, buffer.Extend() will fail with ErrInvalidPayload
 
 			err = buffer.Extend(packet.continuityCounter(), packet.Payload())
 		}
