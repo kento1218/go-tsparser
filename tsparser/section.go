@@ -96,3 +96,51 @@ func (e *StreamEntry) PID() PID {
 func (e *StreamEntry) Descriptors() []Descriptor {
 	return e.descriptors
 }
+
+type ServiceDescriptionSection struct {
+	originalNetwork uint16
+	serviceEntries  []*ServiceEntry
+}
+
+type ServiceEntry struct {
+	serviceId   uint16
+	descriptors []Descriptor
+}
+
+func ParseServiceDescriptionSection(table Table) *ServiceDescriptionSection {
+	sec := new(ServiceDescriptionSection)
+
+	data := table.Data()
+	sec.originalNetwork = uint16(data[0])<<8 | uint16(data[1])
+
+	entryData := data[3:]
+	for len(entryData) > 0 {
+		entry := &ServiceEntry{
+			serviceId: uint16(entryData[0])<<8 | uint16(entryData[1]),
+		}
+		sec.serviceEntries = append(sec.serviceEntries, entry)
+
+		infolen := uint(entryData[3]&0x0f)<<8 | uint(entryData[4])
+		entry.descriptors = ParseDescriptors(entryData[5 : 5+infolen])
+
+		entryData = entryData[5+infolen:]
+	}
+
+	return sec
+}
+
+func (s *ServiceDescriptionSection) OriginalNetwork() uint16 {
+	return s.originalNetwork
+}
+
+func (s *ServiceDescriptionSection) ServiceEntries() []*ServiceEntry {
+	return s.serviceEntries
+}
+
+func (e *ServiceEntry) ServiceID() uint16 {
+	return e.serviceId
+}
+
+func (e *ServiceEntry) Descriptors() []Descriptor {
+	return e.descriptors
+}

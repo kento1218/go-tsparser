@@ -31,3 +31,23 @@ func TestParseProgramMapSection(t *testing.T) {
 		}
 	}
 }
+
+func TestParseServiceDescriptionSection(t *testing.T) {
+	raw, _ := hex.DecodeString("42f0787fe4d300007fe4ff0420f30018480a0100071b7cd5b8c6ecd3c10184cf0701fe01f002ffff0421f30014480a0100071b7cd5b8c6ecd3c10184cf0302fe010422f30014480a0100071b7cd5b8c6ecd3c10184cf0302fe0105a0e50018480ac000071b7cd5b8c6ecd3c10188cf07030e8946554a49")
+	table := Table(raw)
+
+	sec := ParseServiceDescriptionSection(table)
+	if sec == nil {
+		t.Errorf("couldnt parse")
+	}
+
+	serviceEntries := sec.ServiceEntries()
+	if len(serviceEntries) != 4 {
+		t.Errorf("4 services expected, but %d", len(serviceEntries))
+	}
+	for _, entry := range serviceEntries {
+		if len(entry.Descriptors()) == 0 {
+			t.Errorf("invalid service descriptors")
+		}
+	}
+}
